@@ -1,32 +1,35 @@
-import { AxiosError } from "axios";
 import { academyApi } from "../http-config";
+
+interface RespostaCadastro {
+    sucesso: boolean;
+    mensagem: string;
+}
 
 export async function cadastrarAluno(dados: {
     nome: string;
     email: string;
     senha: string;
-}): Promise<{
-    sucesso: boolean;
-    mensagem: string;
-}> {
+}): Promise<RespostaCadastro> {
     try {
-        const resultado = await academyApi.post("alunos", dados);
+        const resultado = await academyApi.post<RespostaCadastro>("alunos", dados);
 
         return {
             sucesso: resultado.data.sucesso,
             mensagem: resultado.data.mensagem,
         };
     } catch (error) {
-        if (error instanceof AxiosError) {
-            return {
-                sucesso: error.response!.data.sucesso,
-                mensagem: error.response!.data.mensagem,
+        const erro = error as {
+            response?: {
+                data?: {
+                    sucesso?: boolean;
+                    mensagem?: string;
+                };
             };
-        }
+        };
 
         return {
-            sucesso: false,
-            mensagem: "Ocorreu um erro inesperado.",
+            sucesso: erro.response?.data?.sucesso ?? false,
+            mensagem: erro.response?.data?.mensagem ?? "Erro no cadastro.",
         };
     }
 }
